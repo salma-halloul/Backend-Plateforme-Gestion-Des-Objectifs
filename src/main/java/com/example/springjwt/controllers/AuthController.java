@@ -1,5 +1,22 @@
 package com.example.springjwt.controllers;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import jakarta.validation.Valid;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
+
 import com.example.springjwt.models.ERole;
 import com.example.springjwt.models.Role;
 import com.example.springjwt.models.User;
@@ -11,24 +28,6 @@ import com.example.springjwt.repository.RoleRepository;
 import com.example.springjwt.repository.UserRepository;
 import com.example.springjwt.security.jwt.JwtUtils;
 import com.example.springjwt.security.services.UserDetailsImpl;
-import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -84,7 +83,7 @@ public class AuthController {
         if (userRepository.existsByEmail(signUpRequest.getEmail())) {
             return ResponseEntity
                     .badRequest()
-                    .body(new MessageResponse("Error: Email is already in use!"));
+                    .body(new MessageResponse("Error: Email is already in used!"));
         }
 
         // Create new user's account
@@ -103,15 +102,15 @@ public class AuthController {
             strRoles.forEach(role -> {
                 switch (role) {
                     case "manager":
-                        Role adminRole = roleRepository.findByName(ERole.ROLE_MANAGER)
+                        Role managerRole = roleRepository.findByName(ERole.ROLE_MANAGER)
                                 .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-                        roles.add(adminRole);
+                        roles.add(managerRole);
 
                         break;
-                    case "collaborator":
-                        Role modRole = roleRepository.findByName(ERole.ROLE_COLLABORATOR)
+                    case "collaborater":
+                        Role collaboraterRole = roleRepository.findByName(ERole.ROLE_COLLABORATER)
                                 .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-                        roles.add(modRole);
+                        roles.add(collaboraterRole);
 
                         break;
                     default:
@@ -122,11 +121,13 @@ public class AuthController {
             });
         }
 
+
         user.setRoles(roles);
         userRepository.save(user);
 
         return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
     }
+
 
 
 }
