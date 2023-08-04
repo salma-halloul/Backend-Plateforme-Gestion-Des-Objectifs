@@ -11,7 +11,8 @@ import com.example.springjwt.models.User;
 import com.example.springjwt.repository.UserRepository;
 
 @Service
-public class UserDetailsServiceImpl implements UserDetailsService {
+public class
+UserDetailsServiceImpl implements UserDetailsService {
     @Autowired
     UserRepository userRepository;
 
@@ -22,6 +23,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("User Not Found with username: " + username));
 
         return UserDetailsImpl.build(user);
+
     }
 
 }

@@ -1,7 +1,11 @@
 package com.example.springjwt.models;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+
+import com.example.springjwt.models.Objective;
+
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -47,6 +51,13 @@ public class User {
         this.password = password;
     }
 
+    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Objective> objectives;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Notification> notifications;
+
+
     public Long getId() {
         return id;
     }
@@ -86,4 +97,6 @@ public class User {
     public void setRoles(Set<Role> roles) {
         this.roles = roles;
     }
+
+
 }

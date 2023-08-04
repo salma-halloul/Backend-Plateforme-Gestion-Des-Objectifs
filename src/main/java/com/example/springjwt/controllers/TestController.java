@@ -21,7 +21,7 @@ public class TestController {
         return "User Content.";
     }
 
-    @GetMapping("/collaborater")
+    @GetMapping("/collab")
     @PreAuthorize("hasRole('COLLABORATER')")
     public String collaboraterAccess() {
         return "Collaborater Board.";
