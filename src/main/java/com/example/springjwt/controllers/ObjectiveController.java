@@ -5,6 +5,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.example.springjwt.models.Objective;
 import com.example.springjwt.service.ObjectiveService;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.example.springjwt.security.services.UserDetailsImpl;
+
 
 import java.util.List;
 
@@ -20,16 +23,16 @@ public class ObjectiveController {
     }
 
     @GetMapping
-    public List<Objective> getAllObjectives() {
-        return objectiveService.getAllObjectives();
+    public List<Objective> getAllObjectives(@AuthenticationPrincipal UserDetailsImpl currentUser) {
+        return objectiveService.getAllObjectives(currentUser.getId());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Objective> getObjectiveById(@PathVariable Long id) {
-        return objectiveService.getObjectiveById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<Objective> getObjectiveById(@PathVariable Long id, @AuthenticationPrincipal UserDetailsImpl currentUser) {
+        Objective objective = objectiveService.getObjectiveById(id, currentUser.getId());
+        return ResponseEntity.ok(objective);
     }
+
 
     @PostMapping
     public Objective createObjective(@RequestBody Objective objective) {
@@ -37,14 +40,22 @@ public class ObjectiveController {
     }
 
     @PutMapping("/{id}")
-    public Objective updateObjective(@RequestBody Objective objective, @PathVariable Long id) {
+    public ResponseEntity<String> updateObjective(@RequestBody Objective objective, @PathVariable Long id, @AuthenticationPrincipal UserDetailsImpl currentUser) {
         objective.setId(id);
-        return objectiveService.saveObjective(objective);
+        return objectiveService.updateObjective(objective, currentUser.getId());
     }
 
+
+
     @DeleteMapping("/{id}")
-    public void deleteObjective(@PathVariable Long id) {
-        objectiveService.deleteObjective(id);
+    public ResponseEntity<String> deleteObjective(@PathVariable Long id, @AuthenticationPrincipal UserDetailsImpl currentUser) {
+        return objectiveService.deleteObjective(id, currentUser.getId());
     }
+
+
+
+
+
 }
+
 
