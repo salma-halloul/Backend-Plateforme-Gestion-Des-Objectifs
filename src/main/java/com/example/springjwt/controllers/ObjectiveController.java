@@ -1,5 +1,6 @@
 package com.example.springjwt.controllers;
 
+import com.example.springjwt.models.ObjectiveUpdateDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -42,15 +43,27 @@ public class ObjectiveController {
     @PutMapping("/{id}")
     public ResponseEntity<String> updateObjective(@RequestBody Objective objective, @PathVariable Long id, @AuthenticationPrincipal UserDetailsImpl currentUser) {
         objective.setId(id);
-        return objectiveService.updateObjective(objective, currentUser.getId());
+        objectiveService.updateObjective(objective, currentUser.getId());
+        return ResponseEntity.ok("Objective with id " + id + " has been updated.");
     }
-
-
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteObjective(@PathVariable Long id, @AuthenticationPrincipal UserDetailsImpl currentUser) {
-        return objectiveService.deleteObjective(id, currentUser.getId());
+        objectiveService.deleteObjective(id, currentUser.getId());
+        return ResponseEntity.ok("Objective with id " + id + " has been deleted.");
     }
+
+
+    @PostMapping("/assign/{ownerId}/{objectiveId}")
+    public Objective assignObjectiveToCollaborator(
+            @AuthenticationPrincipal UserDetailsImpl currentUser,  // Assuming you're using Spring Security's UserDetails for authentication
+            @PathVariable Long ownerId,
+            @PathVariable Long objectiveId,
+            @RequestBody ObjectiveUpdateDto percentage
+    ) {
+        return objectiveService.assignObjectiveToCollaborator(currentUser.getId(), ownerId, objectiveId, percentage.getPercentage());
+    }
+
 
 
 

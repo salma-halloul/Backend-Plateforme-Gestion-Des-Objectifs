@@ -26,6 +26,17 @@ public class Objective {
     @JoinColumn(name = "owner_id")
     private User owner;
 
+    @Column
+    private double percentage;
+
+    public double getPercentage() {
+        return percentage;
+    }
+
+    public void setPercentage(Double percentage) {
+        this.percentage = percentage;
+    }
+
     public Long getId() {
         return id;
     }
