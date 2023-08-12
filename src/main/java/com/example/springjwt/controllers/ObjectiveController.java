@@ -3,6 +3,7 @@ package com.example.springjwt.controllers;
 import com.example.springjwt.models.ObjectiveUpdateDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import com.example.springjwt.models.Objective;
 import com.example.springjwt.service.ObjectiveService;
@@ -37,7 +38,8 @@ public class ObjectiveController {
 
     @PostMapping
     public Objective createObjective(@RequestBody Objective objective) {
-        return objectiveService.saveObjective(objective);
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return objectiveService.saveObjective(objective, userDetails);
     }
 
     @PutMapping("/{id}")

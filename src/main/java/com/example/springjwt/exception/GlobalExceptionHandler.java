@@ -39,5 +39,28 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
 
+    @ExceptionHandler(NoSuggestionFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseEntity<String> handleNoSuggestionFoundException(NoSuggestionFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+
+    }
+
+    @ExceptionHandler(SuggestionNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseEntity<String> handleSuggestionNotFoundException(SuggestionNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+
+    }
+
+    @ExceptionHandler(SuggestionNotBelongingException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ResponseEntity<String> handleSuggestionNotBelongingException(SuggestionNotBelongingException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
+
+    }
+
+
+
 
 }

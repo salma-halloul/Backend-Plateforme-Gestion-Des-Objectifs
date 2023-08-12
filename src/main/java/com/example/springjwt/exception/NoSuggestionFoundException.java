@@ -4,10 +4,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(HttpStatus.NOT_FOUND)
-public class ObjectiveNotFoundException extends RuntimeException {
+public class NoSuggestionFoundException extends RuntimeException {
 
-    public ObjectiveNotFoundException(String message) {
-        super(message);
+    public NoSuggestionFoundException(Long userId) {
+        super("No suggestions found for user with ID: " + userId);
     }
-
 }
+

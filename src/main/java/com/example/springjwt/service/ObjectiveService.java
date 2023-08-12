@@ -3,8 +3,10 @@ package com.example.springjwt.service;
 import com.example.springjwt.exception.NoObjectivesFoundException;
 import com.example.springjwt.exception.ObjectiveNotFoundException;
 import com.example.springjwt.exception.UserNotFoundException;
+import com.example.springjwt.models.ERole;
 import com.example.springjwt.models.User;
 import com.example.springjwt.repository.UserRepository;
+import com.example.springjwt.security.services.UserDetailsImpl;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -69,16 +71,22 @@ public class ObjectiveService {
         }
      }
 
-      public Objective saveObjective(Objective objective) {
-        //User owner = userRepository.findById(objective.getOwner().getId())
-        //        .orElseThrow(() -> new EntityNotFoundException("User not found"));
+    public Objective saveObjective(Objective objective, UserDetailsImpl userPrincipal) {
 
-       // objective.setOwner(owner);
+        User currentUser = userRepository.findById(userPrincipal.getId())
+                .orElseThrow(() -> new UserNotFoundException(userPrincipal.getId()));
 
+        // Check if the user has the MANAGER role
+        if (currentUser.getRoles().stream().noneMatch(role -> role.getName().equals(ERole.ROLE_MANAGER))) {
+            throw new AccessDeniedException("User does not have permission to creat this objective");
+        }
+
+        objective.setOwner(currentUser);
         return objectiveRepository.save(objective);
-      }
+    }
 
-       public ResponseEntity<String> deleteObjective(Long id, Long ownerId) {
+
+    public ResponseEntity<String> deleteObjective(Long id, Long ownerId) {
             Objective existingObjective = objectiveRepository.findById(id)
                     .orElseThrow(() -> new ObjectiveNotFoundException("Objective not found with id " + id));
 

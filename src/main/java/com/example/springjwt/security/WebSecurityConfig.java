@@ -73,6 +73,7 @@ public class WebSecurityConfig {
                                 .requestMatchers("/api/test/**").permitAll()
                                 .requestMatchers("/api/objectives/**").permitAll()
                                 .requestMatchers("/api/notifications/**").permitAll()
+                                .requestMatchers("/api/suggestions/**").permitAll()
                                 .anyRequest().authenticated()
                 );
 
@@ -82,7 +83,6 @@ public class WebSecurityConfig {
 
         return http.build();
     }
-
 
 
 
