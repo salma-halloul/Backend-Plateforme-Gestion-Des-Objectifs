@@ -77,7 +77,13 @@ public class NotificationService {
         response.setMessage(notification.getMessage());
         response.setCreationDate(notification.getCreationDate());
         response.setOwnerUsername(notification.getUser().getUsername());
-        response.setRelatedObjective(notification.getRelatedObjective());
+        if(notification.getRelatedObjective() != null) {
+            response.setRelatedObjective(notification.getRelatedObjective());
+        }
+        if(notification.getRelatedSuggestion() != null) {
+            response.setRelatedSuggestion(notification.getRelatedSuggestion());
+        }
+
 
         return response;
     }

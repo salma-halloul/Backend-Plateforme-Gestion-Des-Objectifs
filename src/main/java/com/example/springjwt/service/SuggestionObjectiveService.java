@@ -1,10 +1,8 @@
 package com.example.springjwt.service;
 
 import com.example.springjwt.exception.*;
-import com.example.springjwt.models.ERole;
-import com.example.springjwt.models.EStatusSug;
-import com.example.springjwt.models.SuggestionObjective;
-import com.example.springjwt.models.User;
+import com.example.springjwt.models.*;
+import com.example.springjwt.repository.NotificationRepository;
 import com.example.springjwt.repository.SuggestionObjectiveRepository;
 import com.example.springjwt.repository.UserRepository;
 import com.example.springjwt.security.services.UserDetailsImpl;
@@ -22,6 +20,9 @@ public class SuggestionObjectiveService {
 
     private final SuggestionObjectiveRepository suggestionObjectiveRepository;
     private final UserRepository userRepository;
+    @Autowired
+    private NotificationRepository notificationRepository;
+
 
     @Autowired
     public SuggestionObjectiveService(SuggestionObjectiveRepository suggestionObjectiveRepository, UserRepository userRepository) {
@@ -82,8 +83,27 @@ public class SuggestionObjectiveService {
         suggestion.setStatus(EStatusSug.PENDING);
         suggestion.setSuggestedBy(currentUser);
 
-        return suggestionObjectiveRepository.save(suggestion);
+        // First save the suggestion to the repository
+        SuggestionObjective savedSuggestion = suggestionObjectiveRepository.save(suggestion);
+
+        // Then notify the managers
+        List<User> managers = userRepository.findAllByRoles_Name(ERole.ROLE_MANAGER);
+        notifyAllManagersAboutNewSuggestion(savedSuggestion, managers, userPrincipal.getUsername());
+
+        return savedSuggestion;
     }
+
+    private void notifyAllManagersAboutNewSuggestion(SuggestionObjective suggestionObjective,List<User> managers, String collaboratorUsername) {
+        String notificationMessage = collaboratorUsername + " has suggested a new objective.";
+        for (User manager : managers) {
+            Notification notification = new Notification();
+            notification.setMessage(notificationMessage);
+            notification.setUser(manager); // The manager is the recipient
+            notification.setRelatedSuggestion(suggestionObjective);
+            notificationRepository.save(notification);
+        }
+    }
+
 
     public SuggestionObjective approveOrRejectSuggestion(Long suggestionId, boolean approve, UserDetailsImpl userPrincipal) {
 
@@ -101,8 +121,22 @@ public class SuggestionObjectiveService {
         suggestion.setStatus(approve ? EStatusSug.APPROVED : EStatusSug.REJECTED);
         suggestion.setManager(currentUser);
 
+        // Envoyer une notification au collaborateur concernant la décision du manager
+        notifyCollaboratorAboutDecision(currentUser, suggestion, approve);
+
         return suggestionObjectiveRepository.save(suggestion);
     }
+
+    private void notifyCollaboratorAboutDecision(User manager, SuggestionObjective suggestion, boolean approve) {
+        String notificationMessage = "Your suggestion has been " + (approve ? "approved" : "rejected") + " by " + manager.getUsername() + ".";
+        Notification notification = new Notification();
+        notification.setMessage(notificationMessage);
+        notification.setUser(suggestion.getSuggestedBy()); // Le collaborateur est le destinataire
+        notification.setRelatedSuggestion(suggestion);
+        notificationRepository.save(notification);
+    }
+
+
 
     public void deleteSuggestion(Long suggestionId, UserDetailsImpl userPrincipal) {
         SuggestionObjective suggestion = suggestionObjectiveRepository.findById(suggestionId)

@@ -105,26 +105,47 @@ public class ObjectiveService {
 
          }
 
-       public ResponseEntity<String> updateObjective(Objective updatedObjective, Long ownerId) {
-          Objective existingObjective = objectiveRepository.findById(updatedObjective.getId())
-                .orElseThrow(() -> new ObjectiveNotFoundException("Objective not found with id:"+ updatedObjective.getId()));
+    public ResponseEntity<String> updateObjective(Objective updatedObjective, Long userId) {
+        Objective existingObjective = objectiveRepository.findById(updatedObjective.getId())
+                .orElseThrow(() -> new ObjectiveNotFoundException("Objective not found with id:" + updatedObjective.getId()));
 
-          User realOwner = userRepository.findById(ownerId)
-                .orElseThrow(() -> new UserNotFoundException(ownerId));
+        User authenticatedUser = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
 
-          if (realOwner.equals(existingObjective.getOwner()) || isUserAManager(realOwner)) {
+        if (authenticatedUser.equals(existingObjective.getOwner())) {
+            // Si c'est le collaborateur, il ne peut changer que le statut
+            if (!existingObjective.getStatus().equals(updatedObjective.getStatus())) {
+                // Informer le manager (assignedBy) du changement de statut
+                User assignedManager = existingObjective.getAssignedBy();
+                if (assignedManager != null) {
+                    createStatusChangeNotification(assignedManager, existingObjective, updatedObjective.getStatus());
+                }
+                existingObjective.setStatus(updatedObjective.getStatus());
+            } else {
+                return ResponseEntity.badRequest().body("You can only change the objective status.");
+            }
+        } else if (authenticatedUser.equals(existingObjective.getAssignedBy())) {
+            // Si c'est le manager, il peut changer tous les champs
             existingObjective.setDescription(updatedObjective.getDescription());
             existingObjective.setStatus(updatedObjective.getStatus());
             existingObjective.setDeadline(updatedObjective.getDeadline());
+        } else {
+            throw new AccessDeniedException("You do not have permission to update this objective.");
+        }
 
-            objectiveRepository.save(existingObjective);
+        objectiveRepository.save(existingObjective);
 
-            return ResponseEntity.ok("Objective with id " + updatedObjective.getId() + " has been updated.");
-          } else {
-            throw new AccessDeniedException("User does not have permission to update this objective");
-          }
+        return ResponseEntity.ok("Objective with id " + updatedObjective.getId() + " has been updated.");
+    }
 
-       }
+    private void createStatusChangeNotification(User manager, Objective objective, EStatus newStatus) {
+        String message = "The status of Objective with ID: " + objective.getId() + " has been changed to: " + newStatus;
+        Notification notification = new Notification();
+        notification.setMessage(message);
+        notification.setUser(manager); // Assigned manager is the recipient
+        notificationRepository.save(notification);
+    }
+
 
     private boolean isUserAManager(User user) {
         return user.getRoles().stream()
@@ -157,6 +178,8 @@ public class ObjectiveService {
 
         objective.setPercentage(percentage);
         objective.setOwner(owner);
+        objective.setAssignedBy(requester); // 'requester' est le manager assignant l'objectif
+
 
         // Créez une notification après avoir attribué l'objectif
         createNotificationForObjectiveAssignment(requester, owner,objective);

@@ -27,6 +27,10 @@ public class Notification {
     @JoinColumn(name = "objective_id")
     private Objective relatedObjective;
 
+    @ManyToOne
+    @JoinColumn(name = "suggestion_id")
+    private SuggestionObjective relatedSuggestion;
+
     public Long getId() {
         return id;
     }
@@ -70,6 +74,14 @@ public class Notification {
 
     public void setRelatedObjective(Objective relatedObjective) {
         this.relatedObjective = relatedObjective;
+    }
+
+    public SuggestionObjective getRelatedSuggestion() {
+        return relatedSuggestion;
+    }
+
+    public void setRelatedSuggestion(SuggestionObjective relatedSuggestion) {
+        this.relatedSuggestion = relatedSuggestion;
     }
 }
 

@@ -49,9 +49,9 @@ public class ObjectiveController {
     @PutMapping("/{id}")
     public ResponseEntity<String> updateObjective(@RequestBody Objective objective, @PathVariable Long id, @AuthenticationPrincipal UserDetailsImpl currentUser) {
         objective.setId(id);
-        objectiveService.updateObjective(objective, currentUser.getId());
-        return ResponseEntity.ok("Objective with id " + id + " has been updated.");
+        return objectiveService.updateObjective(objective, currentUser.getId());
     }
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteObjective(@PathVariable Long id, @AuthenticationPrincipal UserDetailsImpl currentUser) {

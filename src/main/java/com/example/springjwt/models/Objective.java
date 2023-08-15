@@ -36,6 +36,17 @@ public class Objective {
             inverseJoinColumns = @JoinColumn(name = "user_id"))
     private List<User> sharedWith;
 
+    @ManyToOne
+    @JoinColumn(name = "assigned_by")
+    private User assignedBy; //le manager qui a assigné cet objectif
+
+    public User getAssignedBy() {
+        return assignedBy;
+    }
+
+    public void setAssignedBy(User assignedBy) {
+        this.assignedBy = assignedBy;
+    }
 
     public double getPercentage() {
         return percentage;
