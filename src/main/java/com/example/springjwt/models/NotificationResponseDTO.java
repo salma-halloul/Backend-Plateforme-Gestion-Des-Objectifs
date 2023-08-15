@@ -1,31 +1,14 @@
 package com.example.springjwt.models;
-import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 
-
-
-
-@Entity
-@Table(name = "notifications")
-public class Notification {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+//classe de showbyid des notification pour afficher le contenu de l'objectif
+public class NotificationResponseDTO {
     private Long id;
-
-    @Column(nullable = false)
     private String message;
-
-    @Column
     private LocalDateTime creationDate;
-
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;  // destinataire
-
-    @ManyToOne
-    @JoinColumn(name = "objective_id")
-    private Objective relatedObjective;
+    private String ownerUsername;  // de la notification
+    private Objective relatedObjective;  // détails de l'objectif lié
 
     public Long getId() {
         return id;
@@ -51,17 +34,12 @@ public class Notification {
         this.creationDate = creationDate;
     }
 
-    public User getUser() {
-        return user;
+    public String getOwnerUsername() {
+        return ownerUsername;
     }
 
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    @PrePersist
-    public void prePersist() {
-        this.creationDate = LocalDateTime.now();
+    public void setOwnerUsername(String ownerUsername) {
+        this.ownerUsername = ownerUsername;
     }
 
     public Objective getRelatedObjective() {
@@ -72,4 +50,3 @@ public class Notification {
         this.relatedObjective = relatedObjective;
     }
 }
-

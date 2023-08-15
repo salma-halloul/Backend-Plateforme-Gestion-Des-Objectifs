@@ -1,7 +1,10 @@
 package com.example.springjwt.controllers;
 
 import com.example.springjwt.models.ObjectiveUpdateDto;
+import com.example.springjwt.models.ObjectiveWithOwnerDTO;
+import com.example.springjwt.models.ShareObjectiveDTO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +15,7 @@ import com.example.springjwt.security.services.UserDetailsImpl;
 
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/objectives")
@@ -58,7 +62,7 @@ public class ObjectiveController {
 
     @PostMapping("/assign/{ownerId}/{objectiveId}")
     public Objective assignObjectiveToCollaborator(
-            @AuthenticationPrincipal UserDetailsImpl currentUser,  // Assuming you're using Spring Security's UserDetails for authentication
+            @AuthenticationPrincipal UserDetailsImpl currentUser,
             @PathVariable Long ownerId,
             @PathVariable Long objectiveId,
             @RequestBody ObjectiveUpdateDto percentage
@@ -66,7 +70,20 @@ public class ObjectiveController {
         return objectiveService.assignObjectiveToCollaborator(currentUser.getId(), ownerId, objectiveId, percentage.getPercentage());
     }
 
+    @PostMapping("/share")
+    public ResponseEntity<Void> shareObjective(@RequestBody ShareObjectiveDTO shareObjectiveDTO, @AuthenticationPrincipal UserDetailsImpl currentUser) {
+        objectiveService.shareObjective(shareObjectiveDTO, currentUser);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 
+    @GetMapping("/shared-with-me")
+    public ResponseEntity<List<ObjectiveWithOwnerDTO>> getSharedObjectives(@AuthenticationPrincipal UserDetailsImpl currentUser) {
+        List<Objective> objectives = objectiveService.getSharedObjectivesForUser(currentUser.getId());
+        List<ObjectiveWithOwnerDTO> response = objectives.stream()
+                .map(obj -> new ObjectiveWithOwnerDTO(obj, obj.getOwner().getUsername()))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
+    }
 
 
 

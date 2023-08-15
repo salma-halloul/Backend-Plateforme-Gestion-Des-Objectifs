@@ -1,5 +1,7 @@
 package com.example.springjwt.controllers;
 
+import com.example.springjwt.models.NotificationDTO;
+import com.example.springjwt.models.NotificationResponseDTO;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,16 +24,16 @@ public class NotificationController {
     }
 
     @GetMapping
-    public List<Notification> getAllNotifications() {
+    public List<NotificationDTO> getAllUserNotifications() {
         return notificationService.getAllNotifications();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Notification> getNotificationById(@PathVariable Long id) {
-        return notificationService.getNotificationById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<NotificationResponseDTO> getNotificationById(@PathVariable Long id) {
+        return ResponseEntity.ok(notificationService.getNotificationById(id));
     }
+
+
 
     @PostMapping
     public Notification createNotification(@RequestBody Notification notification) {

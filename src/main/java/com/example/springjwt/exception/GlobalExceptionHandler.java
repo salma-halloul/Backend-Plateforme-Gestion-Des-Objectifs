@@ -60,6 +60,11 @@ public class GlobalExceptionHandler {
 
     }
 
+    @ExceptionHandler(NoNotificationsFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseEntity<String> handleNoNotificationsFoundException(NoNotificationsFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    }
 
 
 

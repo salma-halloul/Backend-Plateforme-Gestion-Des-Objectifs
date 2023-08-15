@@ -2,6 +2,7 @@ package com.example.springjwt.models;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 
 @Entity
@@ -28,6 +29,13 @@ public class Objective {
 
     @Column
     private double percentage;
+
+    @ManyToMany
+    @JoinTable(name = "shared_objectives",
+            joinColumns = @JoinColumn(name = "objective_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id"))
+    private List<User> sharedWith;
+
 
     public double getPercentage() {
         return percentage;
@@ -78,5 +86,12 @@ public class Objective {
         this.status = status;
     }
 
+    public List<User> getSharedWith() {
+        return sharedWith;
+    }
+
+    public void setSharedWith(List<User> sharedWith) {
+        this.sharedWith = sharedWith;
+    }
 }
 

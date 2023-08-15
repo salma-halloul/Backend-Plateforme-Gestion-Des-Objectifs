@@ -3,15 +3,14 @@ package com.example.springjwt.service;
 import com.example.springjwt.exception.NoObjectivesFoundException;
 import com.example.springjwt.exception.ObjectiveNotFoundException;
 import com.example.springjwt.exception.UserNotFoundException;
-import com.example.springjwt.models.ERole;
-import com.example.springjwt.models.User;
+import com.example.springjwt.models.*;
+import com.example.springjwt.repository.NotificationRepository;
 import com.example.springjwt.repository.UserRepository;
 import com.example.springjwt.security.services.UserDetailsImpl;
-import jakarta.persistence.EntityNotFoundException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import com.example.springjwt.models.Objective;
 import com.example.springjwt.repository.ObjectiveRepository;
 import org.springframework.security.access.AccessDeniedException;
 import org.slf4j.Logger;
@@ -28,6 +27,10 @@ public class ObjectiveService {
     private static final Logger log = LoggerFactory.getLogger(ObjectiveService.class);
 
 
+    @Autowired
+    private NotificationService notificationService;
+    @Autowired
+    private NotificationRepository notificationRepository;
 
     @Autowired
      public ObjectiveService(ObjectiveRepository objectiveRepository, UserRepository userRepository) {
@@ -134,6 +137,7 @@ public class ObjectiveService {
     }
 
 
+
     public Objective assignObjectiveToCollaborator(Long requesterId, Long ownerId, Long objectiveId, double percentage) {
         User requester = userRepository.findById(requesterId)
                 .orElseThrow(() -> new UserNotFoundException(requesterId));
@@ -154,12 +158,55 @@ public class ObjectiveService {
         objective.setPercentage(percentage);
         objective.setOwner(owner);
 
+        // Créez une notification après avoir attribué l'objectif
+        createNotificationForObjectiveAssignment(requester, owner,objective);
+
         return objectiveRepository.save(objective);
+    }
+
+    private void createNotificationForObjectiveAssignment(User manager, User collaborator,Objective objective) {
+        String message = manager.getUsername() + " assigned you a new objective.";
+        Notification notification = new Notification();
+        notification.setMessage(message);
+        notification.setUser(collaborator); // collaborator is the recipient
+        notification.setRelatedObjective(objective);
+        notificationRepository.save(notification);
     }
 
 
 
+    public void shareObjective(ShareObjectiveDTO shareObjectiveDTO, UserDetailsImpl currentUser) {
+        Objective objective = objectiveRepository.findById(shareObjectiveDTO.getObjectiveId())
+                .orElseThrow(() -> new ObjectiveNotFoundException("Objective with ID: " + shareObjectiveDTO.getObjectiveId() + " not found"));
 
+        // Vérifier si l'utilisateur authentifié est l'owner de l'objectif
+        if (!objective.getOwner().getId().equals(currentUser.getId())) {
+            throw new AccessDeniedException("Only the owner can share this objective");
+        }
+
+        List<User> usersToShareWith = userRepository.findAllById(shareObjectiveDTO.getUserIds());
+
+        // Vérifier que tous les utilisateurs sont des collaborateurs
+        for (User user : usersToShareWith) {
+            if (!isUserACollaborator(user)) {
+                throw new AccessDeniedException("You can only share objectives with collaborators");
+            }
+
+            // Créer et envoyer une notification pour chaque utilisateur
+            Notification notification = new Notification();
+            notification.setUser(user); // l'utilisateur qui recevra la notification
+            notification.setMessage(currentUser.getUsername() + " has shared an objective with you."); // Le contenu de la notification
+            notificationService.saveNotification(notification); // Sauvegarder la notification
+        }
+
+        objective.getSharedWith().addAll(usersToShareWith);
+        objectiveRepository.save(objective);
+    }
+
+
+    public List<Objective> getSharedObjectivesForUser(Long userId) {
+        return objectiveRepository.findBySharedWith_Id(userId);
+    }
 
 }
 
