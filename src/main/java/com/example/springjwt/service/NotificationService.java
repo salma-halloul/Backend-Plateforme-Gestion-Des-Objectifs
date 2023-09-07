@@ -36,6 +36,7 @@ public class NotificationService {
     public List<NotificationDTO> getAllNotifications() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
+
         Long currentUserId = userDetails.getId();
 
         List<Notification> userNotifications = notificationRepository.findByUserId(currentUserId);
@@ -83,7 +84,6 @@ public class NotificationService {
         if(notification.getRelatedSuggestion() != null) {
             response.setRelatedSuggestion(notification.getRelatedSuggestion());
         }
-
 
         return response;
     }

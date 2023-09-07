@@ -9,9 +9,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.example.springjwt.models.Notification;
 import com.example.springjwt.service.NotificationService;
-
 import java.util.List;
 
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/notifications")
 public class NotificationController {
@@ -32,7 +32,6 @@ public class NotificationController {
     public ResponseEntity<NotificationResponseDTO> getNotificationById(@PathVariable Long id) {
         return ResponseEntity.ok(notificationService.getNotificationById(id));
     }
-
 
 
     @PostMapping

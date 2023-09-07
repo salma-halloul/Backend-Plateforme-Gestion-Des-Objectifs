@@ -7,16 +7,21 @@ import com.example.springjwt.models.*;
 import com.example.springjwt.repository.NotificationRepository;
 import com.example.springjwt.repository.UserRepository;
 import com.example.springjwt.security.services.UserDetailsImpl;
+import java.util.Map;
+import java.util.stream.Collectors;
+import org.springframework.security.core.Authentication;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import com.example.springjwt.repository.ObjectiveRepository;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 
 @Service
@@ -26,18 +31,16 @@ public class ObjectiveService {
     private final UserRepository userRepository;
     private static final Logger log = LoggerFactory.getLogger(ObjectiveService.class);
 
-
     @Autowired
     private NotificationService notificationService;
     @Autowired
     private NotificationRepository notificationRepository;
 
     @Autowired
-     public ObjectiveService(ObjectiveRepository objectiveRepository, UserRepository userRepository) {
+    public ObjectiveService(ObjectiveRepository objectiveRepository, UserRepository userRepository) {
         this.userRepository = userRepository;
         this.objectiveRepository = objectiveRepository;
-     }
-
+    }
 
     public List<Objective> getAllObjectives(Long requesterId) {
         User requester = userRepository.findById(requesterId)
@@ -57,12 +60,11 @@ public class ObjectiveService {
         }
 
         return objectives;
-     }
+    }
 
-
-     public Objective getObjectiveById(Long id, Long requesterId) {
+    public Objective getObjectiveById(Long id, Long requesterId) {
         Objective existingObjective = objectiveRepository.findById(id)
-                .orElseThrow(() -> new ObjectiveNotFoundException("Objective not found with id "  + id));
+                .orElseThrow(() -> new ObjectiveNotFoundException("Objective not found with id " + id));
 
         User requester = userRepository.findById(requesterId)
                 .orElseThrow(() -> new UserNotFoundException(requesterId));
@@ -72,7 +74,7 @@ public class ObjectiveService {
         } else {
             throw new AccessDeniedException("Requester does not have permission to view this objective");
         }
-     }
+    }
 
     public Objective saveObjective(Objective objective, UserDetailsImpl userPrincipal) {
 
@@ -88,26 +90,25 @@ public class ObjectiveService {
         return objectiveRepository.save(objective);
     }
 
-
     public ResponseEntity<String> deleteObjective(Long id, Long ownerId) {
-            Objective existingObjective = objectiveRepository.findById(id)
-                    .orElseThrow(() -> new ObjectiveNotFoundException("Objective not found with id " + id));
+        Objective existingObjective = objectiveRepository.findById(id)
+                .orElseThrow(() -> new ObjectiveNotFoundException("Objective not found with id " + id));
 
-            User realOwner = userRepository.findById(ownerId)
-                    .orElseThrow(() -> new UserNotFoundException(ownerId));
+        User realOwner = userRepository.findById(ownerId)
+                .orElseThrow(() -> new UserNotFoundException(ownerId));
 
-            if (realOwner.equals(existingObjective.getOwner()) || isUserAManager(realOwner)) {
-                objectiveRepository.deleteById(id);
-                return ResponseEntity.ok("Objective with id " + id + " has been deleted.");
-            } else {
-                throw new AccessDeniedException("User does not have permission to delete this objective");
-            }
-
-         }
+        if (realOwner.equals(existingObjective.getOwner()) || isUserAManager(realOwner)) {
+            objectiveRepository.deleteById(id);
+            return ResponseEntity.ok("Objective with id " + id + " has been deleted.");
+        } else {
+            throw new AccessDeniedException("User does not have permission to delete this objective");
+        }
+    }
 
     public ResponseEntity<String> updateObjective(Objective updatedObjective, Long userId) {
         Objective existingObjective = objectiveRepository.findById(updatedObjective.getId())
-                .orElseThrow(() -> new ObjectiveNotFoundException("Objective not found with id:" + updatedObjective.getId()));
+                .orElseThrow(() -> new ObjectiveNotFoundException(
+                        "Objective not found with id:" + updatedObjective.getId()));
 
         User authenticatedUser = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
@@ -146,7 +147,6 @@ public class ObjectiveService {
         notificationRepository.save(notification);
     }
 
-
     private boolean isUserAManager(User user) {
         return user.getRoles().stream()
                 .anyMatch(role -> role.getId() == 3); // 3 est l'ID du rôle manager
@@ -157,9 +157,8 @@ public class ObjectiveService {
                 .anyMatch(role -> role.getId() == 2);
     }
 
-
-
-    public Objective assignObjectiveToCollaborator(Long requesterId, Long ownerId, Long objectiveId, double percentage) {
+    public Objective assignObjectiveToCollaborator(Long requesterId, Long ownerId, Long objectiveId,
+            double percentage) {
         User requester = userRepository.findById(requesterId)
                 .orElseThrow(() -> new UserNotFoundException(requesterId));
 
@@ -170,7 +169,7 @@ public class ObjectiveService {
         User owner = userRepository.findById(ownerId)
                 .orElseThrow(() -> new UserNotFoundException(ownerId));
         Objective objective = objectiveRepository.findById(objectiveId)
-                .orElseThrow(() -> new ObjectiveNotFoundException("Objective not found with id:"+objectiveId));
+                .orElseThrow(() -> new ObjectiveNotFoundException("Objective not found with id:" + objectiveId));
 
         if (!isUserACollaborator(owner)) {
             throw new AccessDeniedException("The specified user is not a collaborator");
@@ -180,14 +179,13 @@ public class ObjectiveService {
         objective.setOwner(owner);
         objective.setAssignedBy(requester); // 'requester' est le manager assignant l'objectif
 
-
         // Créez une notification après avoir attribué l'objectif
-        createNotificationForObjectiveAssignment(requester, owner,objective);
+        createNotificationForObjectiveAssignment(requester, owner, objective);
 
         return objectiveRepository.save(objective);
     }
 
-    private void createNotificationForObjectiveAssignment(User manager, User collaborator,Objective objective) {
+    private void createNotificationForObjectiveAssignment(User manager, User collaborator, Objective objective) {
         String message = manager.getUsername() + " assigned you a new objective.";
         Notification notification = new Notification();
         notification.setMessage(message);
@@ -196,43 +194,56 @@ public class ObjectiveService {
         notificationRepository.save(notification);
     }
 
-
-
     public void shareObjective(ShareObjectiveDTO shareObjectiveDTO, UserDetailsImpl currentUser) {
         Objective objective = objectiveRepository.findById(shareObjectiveDTO.getObjectiveId())
-                .orElseThrow(() -> new ObjectiveNotFoundException("Objective with ID: " + shareObjectiveDTO.getObjectiveId() + " not found"));
+                .orElseThrow(() -> new ObjectiveNotFoundException(
+                        "Objective with ID: " + shareObjectiveDTO.getObjectiveId() + " not found"));
 
-        // Vérifier si l'utilisateur authentifié est l'owner de l'objectif
         if (!objective.getOwner().getId().equals(currentUser.getId())) {
             throw new AccessDeniedException("Only the owner can share this objective");
         }
 
         List<User> usersToShareWith = userRepository.findAllById(shareObjectiveDTO.getUserIds());
 
-        // Vérifier que tous les utilisateurs sont des collaborateurs
         for (User user : usersToShareWith) {
             if (!isUserACollaborator(user)) {
                 throw new AccessDeniedException("You can only share objectives with collaborators");
             }
 
-            // Créer et envoyer une notification pour chaque utilisateur
             Notification notification = new Notification();
-            notification.setUser(user); // l'utilisateur qui recevra la notification
-            notification.setMessage(currentUser.getUsername() + " has shared an objective with you."); // Le contenu de la notification
-            notificationService.saveNotification(notification); // Sauvegarder la notification
+            notification.setUser(user);
+            notification.setMessage(currentUser.getUsername() + " has shared an objective with you.");
+            notificationService.saveNotification(notification);
         }
 
         objective.getSharedWith().addAll(usersToShareWith);
         objectiveRepository.save(objective);
     }
 
-
     public List<Objective> getSharedObjectivesForUser(Long userId) {
         return objectiveRepository.findBySharedWith_Id(userId);
     }
 
+    // Count number of statut for each user
+    public Map<EStatus, Long> getStatusCountForUser(Long userId) {
+        List<Objective> objectives = getAllObjectives(userId);
+
+        Map<EStatus, Long> statusCount = objectives.stream()
+                .collect(Collectors.groupingBy(Objective::getStatus, Collectors.counting()));
+
+        return statusCount;
+    }
+
+    // Objective's deadline for each user
+    public Map<Long, ObjectiveDetails> getDetailsForUser(Long userId) {
+        List<Objective> objectives = getAllObjectives(userId);
+
+        Map<Long, ObjectiveDetails> detailsMap = objectives.stream()
+                .collect(Collectors.toMap(
+                        Objective::getId,
+                        obj -> new ObjectiveDetails(obj.getDescription(), obj.getDeadline())));
+
+        return detailsMap;
+    }
+
 }
-
-
-
-

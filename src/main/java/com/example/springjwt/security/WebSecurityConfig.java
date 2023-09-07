@@ -5,7 +5,6 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -27,7 +26,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableMethodSecurity
 @EnableJpaRepositories(basePackages = "com.example.springjwt.repository")
 @EnableTransactionManagement
-@EntityScan(basePackages = {"com.example.springjwt.models"})
+@EntityScan(basePackages = { "com.example.springjwt.models" })
 public class WebSecurityConfig {
     @Autowired
     UserDetailsServiceImpl userDetailsService;
@@ -60,22 +59,20 @@ public class WebSecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-
-
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth ->
-                        auth.requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
+                .authorizeHttpRequests(
+                        auth -> auth.requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
                                 .requestMatchers("/api/auth/**").permitAll()
                                 .requestMatchers("/api/test/**").permitAll()
-                                .requestMatchers("/api/objectives/**").permitAll()
                                 .requestMatchers("/api/notifications/**").permitAll()
+                                .requestMatchers("/api/objectives/**").permitAll()
                                 .requestMatchers("/api/suggestions/**").permitAll()
-                                .anyRequest().authenticated()
-                );
+                                .requestMatchers("/api/users/**").permitAll()
+                                .anyRequest().authenticated());
 
         http.authenticationProvider(authenticationProvider());
 
@@ -83,7 +80,5 @@ public class WebSecurityConfig {
 
         return http.build();
     }
-
-
 
 }

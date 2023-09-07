@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/suggestions")
 public class SuggestionObjectiveController {
@@ -33,7 +34,6 @@ public class SuggestionObjectiveController {
         SuggestionObjective suggestion = suggestionObjectiveService.getSuggestionById(id, userDetails);
         return ResponseEntity.ok(suggestion);
     }
-
     @PostMapping
     public ResponseEntity<SuggestionObjective> createSuggestion(@RequestBody SuggestionObjective suggestion) {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();

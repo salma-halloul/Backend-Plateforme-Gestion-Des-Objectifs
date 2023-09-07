@@ -15,7 +15,7 @@ public class NotificationResponseDTO {
     private Objective relatedObjective;  // détails de l'objectif lié
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    private SuggestionObjective relatedSuggestion;  //
+    private SuggestionObjective relatedSuggestion;
 
     public Long getId() {
         return id;
